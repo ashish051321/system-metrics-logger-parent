@@ -11,14 +11,21 @@ public class SystemMetricsLogger {
 
     public SystemMetricsLogger(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
+        System.out.println("SystemMetricsLogger initialized with meterRegistry: " + meterRegistry);
     }
 
     @Scheduled(fixedRate = 60000)
     public void logMetrics() {
-        double cpu = meterRegistry.get("system.cpu.usage").gauge().value();
-        double memory = meterRegistry.get("jvm.memory.used").gauge().value();
-        double threads = meterRegistry.get("jvm.threads.live").gauge().value();
-        System.out.printf("[Metrics] CPU: %.2f%% | Memory: %s | Threads: %.0f%n",
-                cpu * 100, MetricUtil.formatBytes(memory), threads);
+        System.out.println("logMetrics method called");
+        try {
+            double cpu = meterRegistry.get("system.cpu.usage").gauge().value();
+            double memory = meterRegistry.get("jvm.memory.used").gauge().value();
+            double threads = meterRegistry.get("jvm.threads.live").gauge().value();
+            System.out.printf("[Metrics] CPU: %.2f%% | Memory: %s | Threads: %.0f%n",
+                    cpu * 100, MetricUtil.formatBytes(memory), threads);
+        } catch (Exception e) {
+            System.out.println("Error in logMetrics: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
