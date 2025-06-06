@@ -8,9 +8,11 @@ import org.springframework.stereotype.Component;
 public class SystemMetricsLogger {
 
     private final MeterRegistry meterRegistry;
+    private final ConnectionPoolMetrics connectionPoolMetrics;
 
     public SystemMetricsLogger(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
+        this.connectionPoolMetrics = new ConnectionPoolMetrics(meterRegistry);
         System.out.println("SystemMetricsLogger initialized with meterRegistry: " + meterRegistry);
     }
 
@@ -32,14 +34,18 @@ public class SystemMetricsLogger {
             double threadPeak = meterRegistry.get("jvm.threads.peak").gauge().value();
             double threadUsagePercent = (threadCount / threadPeak) * 100;
 
+            // Get Connection Pool Metrics
+            String connectionPoolMetricsStr = connectionPoolMetrics.getConnectionPoolMetrics();
+
             // Splunk-friendly format with clear key-value pairs
-            System.out.printf("METRICS|CPU_USAGE_PERCENT=%.2f|MEMORY_USED_MB=%s|MEMORY_AVAILABLE_MB=%s|MEMORY_USAGE_PERCENT=%.2f|THREAD_COUNT=%.0f|THREAD_USAGE_PERCENT=%.2f%n",
+            System.out.printf("METRICS|CPU_USAGE_PERCENT=%.2f|MEMORY_USED_MB=%s|MEMORY_AVAILABLE_MB=%s|MEMORY_USAGE_PERCENT=%.2f|THREAD_COUNT=%.0f|THREAD_USAGE_PERCENT=%.2f%s%n",
                     cpuUsage,
                     MetricUtil.formatBytes(memoryUsed),
                     MetricUtil.formatBytes(memoryAvailable),
                     memoryUsagePercent,
                     threadCount,
-                    threadUsagePercent);
+                    threadUsagePercent,
+                    connectionPoolMetricsStr);
         } catch (Exception e) {
             System.out.println("ERROR|METRICS_COLLECTION_FAILED|" + e.getMessage());
         }

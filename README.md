@@ -7,6 +7,7 @@ A Spring Boot library that provides system metrics logging functionality for bot
 - CPU usage monitoring
 - Memory usage tracking
 - Thread count monitoring
+- Connection pool monitoring (Tomcat JDBC and HikariCP)
 - Compatible with both Spring Boot 2.x and 3.x
 - Auto-configuration support
 - Configurable logging interval
@@ -45,17 +46,58 @@ The library collects and logs the following metrics in a Splunk-friendly format:
   - Calculated as (current threads / peak threads) * 100
   - Example: `THREAD_USAGE_PERCENT=75.00` means using 75% of peak thread count
 
+### Connection Pool Metrics
+
+#### Tomcat JDBC Pool Metrics (if using Tomcat)
+- `TOMCAT_ACTIVE_CONNECTIONS`: Number of active database connections
+  - Integer value
+  - Example: `TOMCAT_ACTIVE_CONNECTIONS=5` means 5 connections are currently in use
+
+- `TOMCAT_MAX_CONNECTIONS`: Maximum number of connections allowed
+  - Integer value
+  - Example: `TOMCAT_MAX_CONNECTIONS=20` means pool can have up to 20 connections
+
+- `TOMCAT_IDLE_CONNECTIONS`: Number of idle connections in the pool
+  - Integer value
+  - Example: `TOMCAT_IDLE_CONNECTIONS=10` means 10 connections are available
+
+- `TOMCAT_CONNECTION_USAGE_PERCENT`: Percentage of max connections being used
+  - Range: 0-100%
+  - Example: `TOMCAT_CONNECTION_USAGE_PERCENT=25.00` means 25% of max connections are in use
+
+#### HikariCP Metrics (if using HikariCP)
+- `HIKARI_ACTIVE_CONNECTIONS`: Number of active database connections
+  - Integer value
+  - Example: `HIKARI_ACTIVE_CONNECTIONS=3` means 3 connections are currently in use
+
+- `HIKARI_MAX_CONNECTIONS`: Maximum number of connections allowed
+  - Integer value
+  - Example: `HIKARI_MAX_CONNECTIONS=15` means pool can have up to 15 connections
+
+- `HIKARI_IDLE_CONNECTIONS`: Number of idle connections in the pool
+  - Integer value
+  - Example: `HIKARI_IDLE_CONNECTIONS=8` means 8 connections are available
+
+- `HIKARI_CONNECTION_USAGE_PERCENT`: Percentage of max connections being used
+  - Range: 0-100%
+  - Example: `HIKARI_CONNECTION_USAGE_PERCENT=20.00` means 20% of max connections are in use
+
 ### Output Format
 The metrics are logged in a pipe-delimited format for easy parsing:
 ```
-METRICS|CPU_USAGE_PERCENT=25.50|MEMORY_USED_MB=512MB|MEMORY_AVAILABLE_MB=1536MB|MEMORY_USAGE_PERCENT=25.00|THREAD_COUNT=45|THREAD_USAGE_PERCENT=75.00
+METRICS|CPU_USAGE_PERCENT=25.50|MEMORY_USED_MB=512MB|MEMORY_AVAILABLE_MB=1536MB|MEMORY_USAGE_PERCENT=25.00|THREAD_COUNT=45|THREAD_USAGE_PERCENT=75.00|TOMCAT_ACTIVE_CONNECTIONS=5|TOMCAT_MAX_CONNECTIONS=20|TOMCAT_IDLE_CONNECTIONS=10|TOMCAT_CONNECTION_USAGE_PERCENT=25.00
 ```
 
-### Error Format
-If metrics collection fails, an error message is logged:
-```
-ERROR|METRICS_COLLECTION_FAILED|<error message>
-```
+### Error and Debug Messages
+- Error messages are logged when metrics collection fails:
+  ```
+  ERROR|METRICS_COLLECTION_FAILED|<error message>
+  ```
+- Debug messages are logged when connection pools are not found:
+  ```
+  DEBUG|TOMCAT_POOL_NOT_FOUND|<error message>
+  DEBUG|HIKARI_POOL_NOT_FOUND|<error message>
+  ```
 
 ## Modules
 
@@ -69,11 +111,13 @@ ERROR|METRICS_COLLECTION_FAILED|<error message>
 - Java 8 or higher
 - Spring Boot 2.x
 - Spring Boot Actuator
+- Either Tomcat JDBC Pool or HikariCP (for connection pool metrics)
 
 ### For Spring Boot 3.x
 - Java 17 or higher
 - Spring Boot 3.x
 - Spring Boot Actuator
+- Either Tomcat JDBC Pool or HikariCP (for connection pool metrics)
 
 ## Dependency Management
 
@@ -157,6 +201,10 @@ system.metrics.enabled=true
 
 # Optional: Configure metrics collection interval (in milliseconds)
 system.metrics.interval=60000  # default is 1 minute
+
+# Required for connection pool metrics
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
 ```
 
 ## Building
@@ -194,6 +242,12 @@ To add new metrics, modify the `SystemMetricsLogger` class in the appropriate mo
 2. **Version Conflicts**
    - If you encounter version conflicts, consider using `compile` scope in your local build
    - Or align your project's Spring Boot version with the metrics logger version
+
+3. **Connection Pool Metrics Not Showing**
+   - Verify that Spring Boot Actuator is enabled
+   - Check if you're using either Tomcat JDBC or HikariCP
+   - Look for debug messages in the logs
+   - Ensure the connection pool is properly configured
 
 ## License
 
