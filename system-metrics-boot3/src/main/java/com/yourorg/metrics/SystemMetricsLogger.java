@@ -1,24 +1,27 @@
 package com.yourorg.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SystemMetricsLogger {
 
+    private static final Logger logger = LoggerFactory.getLogger(SystemMetricsLogger.class);
     private final MeterRegistry meterRegistry;
     private final ConnectionPoolMetrics connectionPoolMetrics;
 
     public SystemMetricsLogger(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.connectionPoolMetrics = new ConnectionPoolMetrics(meterRegistry);
-        System.out.println("SystemMetricsLogger initialized with meterRegistry: " + meterRegistry);
+        logger.info("SystemMetricsLogger initialized with meterRegistry: {}", meterRegistry);
     }
 
     @Scheduled(fixedRate = 60000)
     public void logMetrics() {
-        System.out.println("logMetrics method called");
+        logger.debug("logMetrics method called");
         try {
             // CPU Usage (percentage)
             double cpuUsage = meterRegistry.get("system.cpu.usage").gauge().value() * 100;
@@ -38,16 +41,16 @@ public class SystemMetricsLogger {
             String connectionPoolMetricsStr = connectionPoolMetrics.getConnectionPoolMetrics();
 
             // Splunk-friendly format with clear key-value pairs
-            System.out.printf("METRICS|CPU_USAGE_PERCENT=%.2f|MEMORY_USED_MB=%s|MEMORY_AVAILABLE_MB=%s|MEMORY_USAGE_PERCENT=%.2f|THREAD_COUNT=%.0f|THREAD_USAGE_PERCENT=%.2f%s%n",
-                    cpuUsage,
+            logger.info("METRICS|CPU_USAGE_PERCENT={}|MEMORY_USED_MB={}|MEMORY_AVAILABLE_MB={}|MEMORY_USAGE_PERCENT={}|THREAD_COUNT={}|THREAD_USAGE_PERCENT={}{}",
+                    String.format("%.2f", cpuUsage),
                     MetricUtil.formatBytes(memoryUsed),
                     MetricUtil.formatBytes(memoryAvailable),
-                    memoryUsagePercent,
+                    String.format("%.2f", memoryUsagePercent),
                     threadCount,
-                    threadUsagePercent,
+                    String.format("%.2f", threadUsagePercent),
                     connectionPoolMetricsStr);
         } catch (Exception e) {
-            System.out.println("ERROR|METRICS_COLLECTION_FAILED|" + e.getMessage());
+            logger.error("METRICS_COLLECTION_FAILED: {}", e.getMessage(), e);
         }
     }
 }

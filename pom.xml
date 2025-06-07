@@ -21,4 +21,19 @@
     <module>system-metrics-boot2</module>
     <module>system-metrics-boot3</module>
   </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- SLF4J -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.36</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Project Modules -->
+      <!-- ... existing code ... -->
+    </dependencies>
+  </dependencyManagement>
 </project>

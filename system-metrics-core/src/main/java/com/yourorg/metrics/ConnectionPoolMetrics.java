@@ -4,8 +4,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Gauge;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConnectionPoolMetrics {
+    private static final Logger logger = LoggerFactory.getLogger(ConnectionPoolMetrics.class);
     private final MeterRegistry meterRegistry;
 
     public ConnectionPoolMetrics(MeterRegistry meterRegistry) {
@@ -32,7 +35,7 @@ public class ConnectionPoolMetrics {
                     activeConnections, maxConnections, idleConnections, connectionUsagePercent));
             }
         } catch (Exception e) {
-            System.out.println("DEBUG|TOMCAT_POOL_NOT_FOUND|" + e.getMessage());
+            logger.debug("TOMCAT_POOL_NOT_FOUND: {}", e.getMessage());
         }
 
         // Check for HikariCP
@@ -52,9 +55,25 @@ public class ConnectionPoolMetrics {
                     activeConnections, maxConnections, idleConnections, connectionUsagePercent));
             }
         } catch (Exception e) {
-            System.out.println("DEBUG|HIKARI_POOL_NOT_FOUND|" + e.getMessage());
+            logger.debug("HIKARI_POOL_NOT_FOUND: {}", e.getMessage());
         }
 
         return metrics.toString();
+    }
+
+    public void collectTomcatPoolMetrics() {
+        try {
+            // ... existing code ...
+        } catch (Exception e) {
+            logger.debug("TOMCAT_POOL_NOT_FOUND: {}", e.getMessage());
+        }
+    }
+
+    public void collectHikariPoolMetrics() {
+        try {
+            // ... existing code ...
+        } catch (Exception e) {
+            logger.debug("HIKARI_POOL_NOT_FOUND: {}", e.getMessage());
+        }
     }
 } 
